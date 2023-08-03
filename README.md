@@ -33,7 +33,7 @@ def ResampleLinear1D(original, targetLen):
     return interp
 
 for ECG_pos,ECG in enumerate(tqdm(dataset)):
-  for lead_pos,lead in tqdm(ECG):
+  for lead_pos,lead in enumerate(ECG):
     dataset[ECG_pos][lead_pos] = ResampleLinear1D(lead,500)
 ```
 
@@ -42,7 +42,7 @@ An even more naive version could simply be
 ```python
 #example for original len of 2500
 for ECG_pos,ECG in enumerate(tqdm(dataset)):
-  for lead_pos,lead in tqdm(ECG):
+  for lead_pos,lead in enumerate(ECG):
     dataset[ECG_pos][lead_pos] = lead[1::5]
 ```
 
