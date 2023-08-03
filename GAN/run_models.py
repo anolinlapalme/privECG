@@ -9,23 +9,17 @@ from tqdm import tqdm
 import gc
 from torch.autograd import Variable
 import argparse
-import os
-import random
-import torch
 import torch.optim as optim
 import torch.nn.functional as F
 import torch.utils.data
-import numpy as np
 import math
-import argparse
-from statistics import mean
 from sklearn.model_selection import train_test_split
 from utils import *
 from models import *
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("-c", "--cuda", type=str, default='cuda:1', required=False, help='cuda device to use')
+parser.add_argument("-c", "--cuda", type=str, default='cuda:0', required=False, help='cuda device to use')
 parser.add_argument("-d", "--data", type=str, required=True, help='path to the ECGs, must be of shape (N,500,12) and normalized between 0,1')
 parser.add_argument("-r", "--r_mask", type=str, required=True, help='path to the r masks npy array, should be a binary array if size (N,500,12) where R-wave regions have a value of 1 and others 0')
 parser.add_argument("-n", "--nr_mask", type=str, required=True, help='path to the non-r masks npy array, should be a binary array if size (N,500,12) where non-R-wave regions have a value of 1 and others 0')
@@ -65,7 +59,12 @@ multiplicator=args.mulitplicator
 
 LongTensor = torch.cuda.LongTensor
 
-generator = GeneratorUNet().to(device)
+if args.mode == 'GenGan':
+    generator = GeneratorUNetGenGan().to(device)
+
+else:
+    generator = GeneratorUNet().to(device)
+
 disciminator = Discriminator().to(device)
 
 y_ = np.load(args.sex_labels)

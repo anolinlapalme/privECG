@@ -20,14 +20,13 @@ class DatasetTrain(Dataset):
         return self.x_data[idx], self.y_data[idx], self.r_data[idx], self.non_r_data[idx]
 
 
-from tqdm.notebook import tqdm
 def NormalizeData(data):
     return (data - np.min(data)) / (np.max(data) - np.min(data))
 
 def normalize_all(data):
     for row in tqdm(range(data.shape[0])):
         for col in range(data.shape[1]):
-            data[row][col] = np.squeeze(np.convolve(NormalizeData(data[row][col]))).astype('float32')
+            data[row][col] = np.squeeze(NormalizeData(data[row][col])).astype('float32')
     return data
 
 

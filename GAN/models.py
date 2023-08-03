@@ -44,7 +44,7 @@ class UNetUpPath(nn.Module):
 
         if skip_input.shape[-1] == 310 or skip_input.shape[-1] == 623 or skip_input.shape[-1] == 1249:
             skip_input = self.pad(skip_input)
- 
+
         x = torch.cat((x, skip_input), 1)
 
         return x
@@ -89,6 +89,43 @@ class GeneratorUNet(nn.Module):
         
         d4 = d4 + (0.1)*torch.randn(d4.shape).to(device)
 
+        u1 = self.up1(d4, d3)
+        u2 = self.up2(u1, d2)
+        u3 = self.up3(u2, d1)
+        u4 = self.final(u3)
+
+        return u4
+
+class GeneratorUNetGenGan(nn.Module):
+    def __init__(self, in_channels=12, out_channels=12):
+        super(GeneratorUNetGenGan, self).__init__()
+
+        self.down1 = UNetDownPath(in_channels, 128, normalize=False)
+        self.down2 = UNetDownPath(128, 256,dropout=0.5)
+        self.down3 = UNetDownPath(256, 512, dropout=0.5)
+        self.down4 = UNetDownPath(512, 512, dropout=0.5, normalize=False)
+
+        self.up1 = UNetUpPath(517, 512, output_padding=0, dropout=0.5)
+        self.up2 = UNetUpPath(1024, 256, output_padding=1,dropout=0.5)
+        self.up3 = UNetUpPath(512, 128, output_padding=1,dropout=0.5)
+
+        self.final = nn.Sequential(
+            nn.Upsample(scale_factor=2),
+            nn.ConstantPad1d((1, 1), 0),
+            nn.Conv1d(256, out_channels, 4, padding=2,
+                      padding_mode='replicate'),
+            Interpolate(size=[500]),
+            nn.Sigmoid(),
+        )
+        self.project_noise = nn.Linear(512, 512)
+    def forward(self, x):
+        d1 = self.down1(x)
+        d2 = self.down2(d1)
+        d3 = self.down3(d2)
+        d4 = self.down4(d3)
+        
+        rand_ = torch.rand(d4.shape[0],5,d4.shape[2]).to('cuda:0')
+        d4 = torch.cat([d4,rand_], dim=1)
         u1 = self.up1(d4, d3)
         u2 = self.up2(u1, d2)
         u3 = self.up3(u2, d1)
